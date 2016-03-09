@@ -4,20 +4,50 @@
 #include <string>
 #include <queue>
 
-const int c_matrixSize = 100;
-typedef std::queue<std::pair<int, int>> intPairQueue;
+const int C_MATRIX_SIZE = 100;
+typedef std::queue<std::pair<int, int>> IntPairQueue;
 
-struct FillingMatrix
+struct SFillingMatrix
 {
-	char matrix[c_matrixSize + 2][c_matrixSize + 2];
-	intPairQueue queue;
-	int lineCount;
+	char m_matrix[C_MATRIX_SIZE + 2][C_MATRIX_SIZE + 2];
+	IntPairQueue m_queue;
+	int m_lineCount;
 
-	FillingMatrix()
-		:queue()
-		,matrix()
-		,lineCount(0)
+	SFillingMatrix()
+		:m_queue()
+		,m_matrix()
+		,m_lineCount(0)
 	{
+	}
+
+	void InitRowFromString(std::size_t& i, std::size_t& j, const std::string &readLine)
+	{
+		if (j < readLine.length() && !readLine.empty())
+		{
+			for (char chr : readLine)
+			{
+				if (j > C_MATRIX_SIZE)
+				{
+					break;
+				}
+
+				if (chr == '#' || chr == 'O')
+				{
+					m_matrix[i][j] = chr;
+				}
+				else
+				{
+					m_matrix[i][j] = ' ';
+				}
+
+				j++;
+			}
+		}
+		else
+		{
+			m_matrix[i][j] = '\0';
+			j++;
+		}
 	}
 
 	bool InitMatrixFromFile(const std::string& fileName)
@@ -27,66 +57,58 @@ struct FillingMatrix
 		{
 			std::string readLine;
 
-			for (std::size_t i = 1; i <= c_matrixSize; i++)
+			for (std::size_t i = 1; i <= C_MATRIX_SIZE; i++)
 			{
 				if (!std::getline(inputFile, readLine))
-					readLine = "";
-				else
-					lineCount++;
-				for (std::size_t j = 1; j <= c_matrixSize;)
 				{
-					if (j < readLine.length() && readLine != "")
-						for (char chr : readLine)
-						{
-							if (j <= c_matrixSize)
-							{
-								if (chr == '#' || chr == 'O')
-									matrix[i][j] = chr;
-								else
-									matrix[i][j] = ' ';
-								j++;
-							}
-							else
-								break;
-						}
-					else
-					{
-						matrix[i][j] = '\0';
-						j++;
-					}
+					readLine.clear();
+				}
+				else
+				{
+					m_lineCount++;
+				}
+				for (std::size_t j = 1; j <= C_MATRIX_SIZE;)
+				{
+					InitRowFromString(i, j, readLine);
 				}
 			}
+
 			CreateBorder();
+
 			return true;
 		}
+
 		return false;
 	}
 
 	void CreateBorder()
 	{
-		for (std::size_t i = 0; i < c_matrixSize + 2; i++)
+		for (std::size_t i = 0; i < C_MATRIX_SIZE + 2; i++)
 		{
-			matrix[i][0] = '#';
-			matrix[i][101] = '#';
+			m_matrix[i][0] = '#';
+			m_matrix[i][101] = '#';
 		}
 
-		for (std::size_t j = 0; j < c_matrixSize + 2; j++)
+		for (std::size_t j = 0; j < C_MATRIX_SIZE + 2; j++)
 		{
-			matrix[0][j] = '#';
-			matrix[101][j] = '#';
+			m_matrix[0][j] = '#';
+			m_matrix[101][j] = '#';
 		}
 	}
 
 	void StartWave(int i, int j) 
 	{
-		if (matrix[i][j] != '#' && matrix[i][j] != '.')
+		if (m_matrix[i][j] != '#' && m_matrix[i][j] != '.')
 		{
-			if (matrix[i][j] == ' ' || matrix[i][j] == '\0')
-				matrix[i][j] = '.';
-			queue.push(std::make_pair(i - 1, j));
-			queue.push(std::make_pair(i + 1, j));
-			queue.push(std::make_pair(i, j - 1));
-			queue.push(std::make_pair(i, j + 1));
+			if (m_matrix[i][j] == ' ' || m_matrix[i][j] == '\0')
+			{
+				m_matrix[i][j] = '.';
+			}
+
+			m_queue.push(std::make_pair(i - 1, j));
+			m_queue.push(std::make_pair(i + 1, j));
+			m_queue.push(std::make_pair(i, j - 1));
+			m_queue.push(std::make_pair(i, j + 1));
 		}
 
 		return;
@@ -94,21 +116,21 @@ struct FillingMatrix
 
 	void FillMatrix() 
 	{
-		for (std::size_t i = 1; i <= c_matrixSize; i++)
+		for (std::size_t i = 1; i <= C_MATRIX_SIZE; i++)
 		{
-			for (std::size_t j = 1; j <= c_matrixSize; j++)
+			for (std::size_t j = 1; j <= C_MATRIX_SIZE; j++)
 			{
-				if (matrix[i][j] == 'O')
+				if (m_matrix[i][j] == 'O')
 				{
-					queue.push(std::make_pair(i, j));
+					m_queue.push(std::make_pair(i, j));
 				}
 			}
 		}
 
-		while (!queue.empty())
+		while (!m_queue.empty())
 		{
-			StartWave(queue.front().first, queue.front().second);
-			queue.pop();
+			StartWave(m_queue.front().first, m_queue.front().second);
+			m_queue.pop();
 		}
 	}
 
@@ -117,26 +139,30 @@ struct FillingMatrix
 		std::ofstream outputFile(fileName);
 		std::size_t j;
 
-		for (std::size_t i = 1; i <= c_matrixSize; i++)
+		for (std::size_t i = 1; i <= C_MATRIX_SIZE; i++)
 		{
 			j = 1;
-			for (j;j <= c_matrixSize; j ++)
+			for (j; j <= C_MATRIX_SIZE; j++)
 			{
-				if (matrix[i][j] == '\0')
+				if (m_matrix[i][j] == '\0')
+				{
 					break;
+				}
 
-				outputFile << matrix[i][j];
+				outputFile << m_matrix[i][j];
 			}
 
-			if (lineCount != 0 || j != 1)
+			if (m_lineCount != 0 || j != 1)
 			{
 				outputFile << std::endl;
-				lineCount--;
+				m_lineCount--;
 			}
 		}
 
 		if (!outputFile.flush())
+		{
 			return false;
+		}
 
 		return true;
 	}
@@ -146,17 +172,17 @@ int main(int argc, char* argv[])
 {
 	if (argc != 3)
 	{
-		std::cout << "Error: inputted incorrect number of parametrs!" << std::endl << "Usage: fill.exe <input file> <output file>";
+		std::cout << "Error: inputted incorrect number of parametrs!" << std::endl << "Usage: fill.exe <input file> <output file>" << std::endl;
 		return 1;
 	}
 
-	FillingMatrix fillingMatrix;
+	SFillingMatrix fillingMatrix;
 	if (fillingMatrix.InitMatrixFromFile(argv[1]))
 	{
 		fillingMatrix.FillMatrix();
 		if (!fillingMatrix.WriteInFile(argv[2]))
 		{
-			std::cout << "Error: cant' write filling matrix in file!";
+			std::cout << "Error: cant' write filling matrix in file!" << std::endl;
 			return 1;
 		}
 
@@ -164,7 +190,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		std::cout << "Incorrect input file name!";
+		std::cout << "Incorrect input file name!" << std::endl;
 		return 1;
 	}
 }
